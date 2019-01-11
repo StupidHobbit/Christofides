@@ -14,7 +14,7 @@ from kristofedes import kristofedes
 
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
-BALLS_RADIUS = 25
+BALLS_RADIUS = 20
 
 
 class Vertex:
@@ -32,6 +32,19 @@ class Vertex:
         arcade.draw_text(str(self.id), self.x - self.radius, self.y + self.radius, self.color)
 
 
+class Edge:
+    def __init__(self, v1, v2, line_width=4):
+        self.x1, self.y1, self.x2, self.y2 = v1.x, v1.y, v2.x, v2.y
+        self.line_width = line_width
+
+        self.len = euclidean((v1.x, v1.y), (v2.x, v2.y))
+        self.label_x = (v1.x + v2.x) / 2 + 10
+        self.label_y = (v1.y + v2.y) / 2 - 10
+
+    def draw(self):
+        arcade.draw_line(self.x1, self.y1, self.x2, self.y2, color=arcade.color.BLACK, border_width=self.line_width)
+        arcade.draw_text(str(int(self.len)), self.label_x, self.label_y, color=arcade.color.RED)
+
 class MyAutomat(arcade.Window):
 
     def __init__(self, width, height, title):
@@ -41,7 +54,7 @@ class MyAutomat(arcade.Window):
 
         arcade.set_background_color(arcade.color.WHITE)
         self.vertices = []
-        self.path = []
+        self.edges = []
         self.picked_vertex = None
 
         for i in range(3):
@@ -53,15 +66,16 @@ class MyAutomat(arcade.Window):
         pos = [(pos.x, pos.y) for pos in self.vertices]
         a = [[euclidean(u, v) for v in pos] for u in pos]
         edges = kristofedes(a)
-        self.path = [pos[e[0]] for e in edges] + [pos[edges[-1][1]]]
+        self.edges = [Edge(self.vertices[e[0]], self.vertices[e[1]]) for e in edges]
 
     def on_draw(self):
         """ Called whenever we need to draw the window. """
         arcade.start_render()
+        for e in self.edges:
+            e.draw()
         for v in self.vertices:
           v.draw()
-        arcade.draw_line_strip(self.path, arcade.color.BLACK)
-        arcade.finish_render()
+
 
     def add_vertex(self):
         self.vertices.append(Vertex(len(self.vertices), randint(0, SCREEN_WIDTH), randint(0, SCREEN_HEIGHT)))
